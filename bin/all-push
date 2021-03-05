@@ -1,0 +1,5 @@
+#!/bin/bash
+
+nix path-info --all | grep -v '\.drv$' \
+    | while read P; do echo "echo $P | push"; done \
+    | parallel

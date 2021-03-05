@@ -8,6 +8,7 @@ Vagrant.configure("2") do |config|
     b.vm.hostname = "base-box"
     b.vm.box = "ubuntu/focal64"
     b.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+    b.vm.network "private_network", ip: '198.18.0.2', netmask: '255.255.255.0', name: 'vboxnet7'
     b.vm.provider "virtualbox" do |v|
       v.memory = 2048
       v.cpus = 4
@@ -28,20 +29,32 @@ Vagrant.configure("2") do |config|
             sed -i '/swap/d' /etc/fstab
             sed -i /pam_motd.so/d /etc/pam.d/sshd
 
-            apt-get update && apt-get install -y eatmydata curl jq nginx supervisor wget
-            systemctl stop supervisor && systemctl disable supervisor
-            wget -O /usr/local/sbin/minio https://dl.min.io/server/minio/release/darwin-amd64/minio
+            apt-get update && apt-get install -y \
+                eatmydata curl jq nginx supervisor wget \
+                net-tools awscli parallel
+
+            for S in supervisor nginx; do
+                systemctl stop $S
+                systemctl disable $S
+            done
+
+            wget -O /usr/local/sbin/minio https://dl.min.io/server/minio/release/linux-amd64/minio
             wget -O /usr/local/sbin/mc    https://dl.min.io/client/mc/release/linux-amd64/mc
             chmod +x /usr/local/sbin/minio /usr/local/sbin/mc
         fi
     SHELL
     b.vm.provision :shell, privileged: false, inline: <<-SHELL
         curl -L https://nixos.org/nix/install | sh
-        echo '. /home/vagrant/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
+        echo '
+            source /home/vagrant/.nix-profile/etc/profile.d/nix.sh
+            export PATH=/vagrant/bin:$PATH
+        ' >  ~/.bash_aliases
+
+        mkdir -p ~/run
+        mkdir -p ~/.aws && chmod 700 ~/.aws
+        ln -s -f /vagrant/dot-aws-config ~/.aws/config
     SHELL
 
-
   end
-
 
 end
