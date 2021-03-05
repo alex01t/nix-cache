@@ -1,0 +1,42 @@
+version: "2"
+volumes:
+  proxystore:
+  s3:
+  cache:
+services:
+  proxy:
+    build:
+      context: ./proxy
+    command: nginx -g 'daemon off;' -c /proxy/nginx.conf
+    volumes:
+      - proxystore:/store
+      - ./proxy:/proxy
+    ports:
+      - 8080:8080
+  s3:
+    build:
+      context: ./s3
+    image: s3
+    command: minio server /s3
+    environment:
+      - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=minio123
+    volumes:
+      - s3:/s3
+    ports:
+      - 9000:9000
+  cache:
+    image: cache
+    build:
+      context: ./nix-cache
+    command: nix-serve
+    volumes:
+      - cache:/cache
+    ports:
+      - 5001:5000
+      - 8001:8000
+
+  builder:
+    build:
+      context: ./nix-builder
+    command: sleep inf
