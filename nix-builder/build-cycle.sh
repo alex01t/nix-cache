@@ -24,6 +24,8 @@ while true; do
     (
       echo -n "*** building $D - "
       cd $D || exit 1
+
+      ### https://docs.cachix.org/continuous-integration-setup/gitlab.html
       nix path-info --all > /tmp/store-path-pre-build-$D
       nix-build
       #nix-build | push
@@ -31,7 +33,7 @@ while true; do
         <(sort /tmp/store-path-pre-build-$D | grep -v '\.drv$') \
         <(nix path-info --all | grep -v '\.drv$' | sort) \
           | push
-
+      ###
       rm -f result
     )
   done

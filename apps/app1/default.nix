@@ -6,7 +6,7 @@ with import <nixpkgs> {};stdenv.mkDerivation rec {
     '';
     buildInputs = [
         (writeShellScriptBin "app1" ''
-            echo "Hello World! app11"
+            echo "Hello World! app11+xxx"
         '')
     ];
 }
